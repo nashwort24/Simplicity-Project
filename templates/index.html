@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Houston Flood Risk Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard {
+            padding: 20px;
+        }
+        
+        .risk-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .risk-value {
+            font-size: 4rem;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        
+        .risk-high { color: #dc3545; }
+        .risk-medium { color: #ffc107; }
+        .risk-low { color: #28a745; }
+        
+        .risk-label {
+            font-size: 1.5rem;
+            color: #555;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 50px;
+            margin-top: 10px;
+        }
+        
+        .sensor-popup {
+            text-align: center;
+        }
+        
+        .sensor-popup h6 {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .sensor-risk {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .sensors-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 0;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .sensor-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .sensor-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        
+        .sensor-item h6 {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .sensor-area {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .region-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .region-btn {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .region-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .region-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .region-group {
+            display: none;
+        }
+        
+        .region-group.active {
+            display: block;
+        }
+        
+        .weather-info {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 16px;
+            border-radius: 10px;
+            color: white;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .weather-item {
+            display: inline-block;
+            margin-right: 30px;
+            margin-bottom: 10px;
+        }
+        
+        .weather-label {
+            font-weight: bold;
+        }
+        
+        h1 {
+            color: white;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard container-fluid">
+        <h1>🌊 Houston Flood Risk Dashboard</h1>
+        
+        <!-- Overall Risk Card -->
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="risk-card">
+                    <div class="risk-label">Overall Flood Risk</div>
+                    <div class="risk-value" id="overall-risk">--</div>
+                    <div class="status-badge" id="status-badge">Loading...</div>
+                </div>
+            </div>
+            
+            <!-- Weather Info -->
+            <div class="col-lg-8">
+                <div class="weather-info">
+                    <h5 style="margin-bottom: 15px;">Current Weather</h5>
+                    <div id="weather-display"></div>
+                </div>
+                
+                <!-- Date & Hour Selectors -->
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-top: 15px; align-items: start;">
+                    <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                        <label for="date-selector" style="font-weight: bold; margin-bottom: 8px; display: block; font-size: 0.9rem;">Select Date:</label>
+                        <select id="date-selector" class="form-control form-control-sm" onchange="onDateChange()" style="margin-bottom: 15px;">
+                            <option value="">-- Date --</option>
+                        </select>
+                        
+                        <label for="hour-selector" style="font-weight: bold; margin-bottom: 8px; display: block; font-size: 0.9rem;">Select Hour:</label>
+                        <select id="hour-selector" class="form-control form-control-sm" onchange="onHourChange()" disabled>
+                            <option value="">-- Hour --</option>
+                        </select>
+                    </div>
+                    
+                    <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                        <h6 style="margin-bottom: 10px; font-size: 0.95rem;">Last 12 Hours Risk Trend</h6>
+                        <canvas id="risk-chart" style="max-height: 150px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Map and Sensors Side-by-Side -->
+        <div class="main-content">
+            <div>
+                <h5 class="mb-3" style="color: white;">Flood Risk Map</h5>
+                <div id="map" style="height: 400px; border-radius: 8px;"></div>
+            </div>
+            
+            <div>
+                <h5 class="mb-3" style="color: white;">Sensor Locations</h5>
+                <div class="region-buttons" id="region-buttons" style="margin-bottom: 20px;"></div>
+                <div id="sensors-list"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let map;
+        let markers = [];
+        let availableDates = [];
+        let riskChart;
+        
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([29.7604, -95.3698], 11);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+        }
+        
+        // Handle date change
+        function onDateChange() {
+            const selected = document.getElementById('date-selector').value;
+            const hourSelector = document.getElementById('hour-selector');
+            
+            // Reset hour selector when date changes
+            hourSelector.innerHTML = '<option value="">-- Select an hour --</option>';
+            hourSelector.disabled = !selected;
+            
+            if (selected && window.hoursByDate && window.hoursByDate[selected]) {
+                // Populate hours for selected date
+                const hours = window.hoursByDate[selected];
+                hours.forEach(hour => {
+                    const option = document.createElement('option');
+                    option.value = hour;
+                    option.textContent = hour + ':00';
+                    hourSelector.appendChild(option);
+                });
+            }
+            
+            // Update dashboard with selected date (without hour initially)
+            updateDashboard(selected, '');
+        }
+        
+        // Handle hour change
+        function onHourChange() {
+            const date = document.getElementById('date-selector').value;
+            const hour = document.getElementById('hour-selector').value;
+            updateDashboard(date, hour);
+        }
+        
+        // Populate date dropdown
+        function populateDateSelector(dates) {
+            const selector = document.getElementById('date-selector');
+            availableDates = dates;
+            
+            dates.forEach(date => {
+                const option = document.createElement('option');
+                option.value = date;
+                option.textContent = date;
+                selector.appendChild(option);
+            });
+            
+            // Set to latest date by default
+            if (dates.length > 0) {
+                selector.value = dates[dates.length - 1];
+            }
+        }
+        
+        // Fetch risk data
+        function updateDashboard(selectedDate = '', selectedHour = '') {
+            let url = '/api/risk';
+            const params = new URLSearchParams();
+            
+            if (selectedDate) {
+                params.append('date', selectedDate);
+            }
+            if (selectedHour) {
+                params.append('hour', selectedHour);
+            }
+            
+            if (params.toString()) {
+                url += '?' + params.toString();
+            }
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    updateRiskCard(data.overall_risk);
+                    updateWeather(data.weather);
+                    updateSensors(data.sensors);
+                })
+                .catch(error => console.error('Error:', error));
+            
+            // Fetch 12-hour history for selected date/time
+            let historyUrl = '/api/risk-history';
+            const historyParams = new URLSearchParams();
+            if (selectedDate) {
+                historyParams.append('date', selectedDate);
+            }
+            if (selectedHour) {
+                historyParams.append('hour', selectedHour);
+            }
+            if (historyParams.toString()) {
+                historyUrl += '?' + historyParams.toString();
+            }
+            
+            fetch(historyUrl)
+                .then(response => response.json())
+                .then(data => updateRiskChart(data.history))
+                .catch(error => console.error('Error fetching history:', error));
+        }
+        
+        // Update risk chart with 12-hour history
+        function updateRiskChart(history) {
+            const ctx = document.getElementById('risk-chart').getContext('2d');
+            
+            if (riskChart) {
+                riskChart.destroy();
+            }
+            
+            riskChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: history.map(h => h.time),
+                    datasets: [{
+                        label: 'Flood Risk %',
+                        data: history.map(h => h.risk),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: history.map(h => 
+                            h.risk > 70 ? '#dc3545' : h.risk > 40 ? '#ffc107' : '#28a745'
+                        ),
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: { size: 11 }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update overall risk card
+        function updateRiskCard(risk) {
+            const riskElement = document.getElementById('overall-risk');
+            const badge = document.getElementById('status-badge');
+            
+            riskElement.textContent = risk.toFixed(1) + '%';
+            
+            if (risk > 70) {
+                riskElement.className = 'risk-value risk-high';
+                badge.textContent = '🔴 HIGH RISK - Flood alert!';
+                badge.style.background = '#dc3545';
+                badge.style.color = 'white';
+            } else if (risk > 40) {
+                riskElement.className = 'risk-value risk-medium';
+                badge.textContent = '🟡 MODERATE RISK - Stay alert';
+                badge.style.background = '#ffc107';
+                badge.style.color = 'black';
+            } else {
+                riskElement.className = 'risk-value risk-low';
+                badge.textContent = '🟢 LOW RISK - Safe conditions';
+                badge.style.background = '#28a745';
+                badge.style.color = 'white';
+            }
+        }
+        
+        // Update weather display
+        function updateWeather(weather) {
+            const weatherDisplay = document.getElementById('weather-display');
+            weatherDisplay.innerHTML = `
+                <div class="weather-item">
+                    <span class="weather-label">Temp:</span> ${weather['Temperature (C)'].toFixed(1)}°C
+                </div>
+                <div class="weather-item">
+                    <span class="weather-label">Humidity:</span> ${weather['Humidity (%)'].toFixed(0)}%
+                </div>
+                <div class="weather-item">
+                    <span class="weather-label">Wind:</span> ${weather['Wind Speed (km/h)'].toFixed(1)} km/h
+                </div>
+                <div class="weather-item">
+                    <span class="weather-label">Pressure:</span> ${weather['Pressure (hPa)'].toFixed(0)} hPa
+                </div>
+                <div class="weather-item">
+                    <span class="weather-label">Precipitation:</span> ${weather['Precipitation (mm)'].toFixed(1)} mm
+                </div>
+            `;
+        }
+        
+        // Update sensor markers on map
+        function updateSensors(sensors) {
+            // Clear old markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+            
+            // Categorize sensors by region (based on longitude)
+            const timberlaneAcres = sensors.filter(s => s.lon > -95.5);
+            const hockleyNeighborhood = sensors.filter(s => s.lon <= -95.5);
+            
+            // Create region buttons
+            const buttonsContainer = document.getElementById('region-buttons');
+            buttonsContainer.innerHTML = '';
+            
+            const timberLaneBtn = document.createElement('button');
+            timberLaneBtn.className = 'region-btn active';
+            timberLaneBtn.textContent = 'Timberlane Acres';
+            timberLaneBtn.addEventListener('click', () => toggleRegion('timberlane', timberLaneBtn));
+            
+            const hockleyBtn = document.createElement('button');
+            hockleyBtn.className = 'region-btn';
+            hockleyBtn.textContent = 'Hockley Neighborhood';
+            hockleyBtn.addEventListener('click', () => toggleRegion('hockley', hockleyBtn));
+            
+            buttonsContainer.appendChild(timberLaneBtn);
+            buttonsContainer.appendChild(hockleyBtn);
+            
+            // Create sensors list container
+            const sensorsList = document.getElementById('sensors-list');
+            sensorsList.innerHTML = '';
+            
+            // Create Timberlane Acres region
+            const timberGroup = document.createElement('div');
+            timberGroup.className = 'region-group active';
+            timberGroup.id = 'timberlane-group';
+            
+            const hockleyGroup = document.createElement('div');
+            hockleyGroup.className = 'region-group';
+            hockleyGroup.id = 'hockley-group';
+            
+            const sensorsGrid = document.createElement('div');
+            sensorsGrid.className = 'sensors-list';
+            
+            // Render Timberlane sensors
+            timberlaneAcres.forEach(sensor => renderSensorItem(sensor, sensorsGrid));
+            timberGroup.appendChild(sensorsGrid);
+            
+            const sensorsGrid2 = document.createElement('div');
+            sensorsGrid2.className = 'sensors-list';
+            
+            // Render Hockley sensors
+            hockleyNeighborhood.forEach(sensor => renderSensorItem(sensor, sensorsGrid2));
+            hockleyGroup.appendChild(sensorsGrid2);
+            
+            sensorsList.appendChild(timberGroup);
+            sensorsList.appendChild(hockleyGroup);
+            
+            // Create all markers
+            sensors.forEach(sensor => {
+                const riskColor = sensor.risk > 70 ? '#dc3545' : 
+                                 sensor.risk > 40 ? '#ffc107' : '#28a745';
+                
+                const marker = L.circleMarker([sensor.lat, sensor.lon], {
+                    radius: 15,
+                    fillColor: riskColor,
+                    color: '#000',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map);
+                
+                marker.bindPopup(`
+                    <div class="sensor-popup">
+                        <h6>${sensor.name}</h6>
+                        <div><small>${sensor.area}</small></div>
+                        <div class="sensor-risk" style="color: ${riskColor}">
+                            ${sensor.risk.toFixed(1)}%
+                        </div>
+                        <small>${sensor.status}</small>
+                    </div>
+                `);
+                
+                markers.push(marker);
+            });
+        }
+        
+        // Render individual sensor item
+        function renderSensorItem(sensor, container) {
+            const riskColor = sensor.risk > 70 ? '#dc3545' : 
+                             sensor.risk > 40 ? '#ffc107' : '#28a745';
+            
+            const item = document.createElement('div');
+            item.className = 'sensor-item';
+            item.innerHTML = `
+                <h6>${sensor.name}</h6>
+                <div class="sensor-area">${sensor.area}</div>
+                <div class="sensor-risk" style="color: ${riskColor}">
+                    ${sensor.risk.toFixed(1)}% Risk
+                </div>
+                <small>${sensor.status}</small>
+            `;
+            
+            item.addEventListener('click', () => {
+                // Find and open marker popup
+                const marker = markers.find(m => m.getLatLng().lat === sensor.lat && m.getLatLng().lng === sensor.lon);
+                if (marker) {
+                    map.setView([sensor.lat, sensor.lon], 14);
+                    marker.openPopup();
+                }
+            });
+            
+            container.appendChild(item);
+        }
+        
+        // Toggle region visibility
+        function toggleRegion(region, button) {
+            const buttons = document.querySelectorAll('.region-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            const timberGroup = document.getElementById('timberlane-group');
+            const hockleyGroup = document.getElementById('hockley-group');
+            
+            if (region === 'timberlane') {
+                timberGroup.classList.add('active');
+                hockleyGroup.classList.remove('active');
+            } else {
+                timberGroup.classList.remove('active');
+                hockleyGroup.classList.add('active');
+            }
+        }
+        
+        // Initialize on load
+        window.addEventListener('load', () => {
+            initMap();
+            
+            // Populate date selector with available dates from backend
+            const scripts = document.querySelectorAll('script');
+            let datesData = [];
+            scripts.forEach(script => {
+                if (script.textContent.includes('window.AVAILABLE_DATES')) {
+                    try {
+                        eval(script.textContent);
+                        datesData = window.AVAILABLE_DATES || [];
+                    } catch (e) {}
+                }
+            });
+            
+            if (datesData.length > 0) {
+                populateDateSelector(datesData);
+            }
+            
+            updateDashboard();
+            
+            // Refresh every 60 seconds
+            setInterval(() => {
+                const selected = document.getElementById('date-selector').value;
+                if (!selected) {
+                    updateDashboard();
+                }
+            }, 60000);
+        });
+    </script>
+    <script>
+        // Pass available dates from Flask template
+        window.AVAILABLE_DATES = {{ available_dates | tojson }};
+        window.hoursByDate = {{ hours_by_date | tojson }};
+    </script>
+</body>
+</html>
