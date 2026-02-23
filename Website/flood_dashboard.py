@@ -10,7 +10,7 @@ app = Flask(__name__, template_folder='Website', static_folder='Website')
 
 # Load merged data and train model
 # Use relative path so it works on deployment
-csv_path = os.path.join(os.path.dirname(__file__), 'test_merged_avalon_houston.csv')
+csv_path = os.path.join(os.path.dirname(__file__), '..', 'Weather Data', 'merge_weather_avalon_84.csv')
 df = pd.read_csv(csv_path)
 df['is_high_high'] = (df['State'] == 'High High').astype(int)
 df['Time'] = pd.to_datetime(df['Time'])

@@ -1,0 +1,6 @@
+This is simply code that runs the random forest model with our data from    Weather_data.Merge_data_avalon
+It returns an output in the terminal that is similar to jupyter notebook. 
+
+As of writing it right now, it has a 91.8% accuracy rate in predicting "high high" values. 
+
+you can rerun the code with   python Models/random_forest_model.py

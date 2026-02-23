@@ -1,0 +1,11 @@
+This folder deals with API's
+
+The WeatherAPI.py is a function to extract weather data near our sensors. It pulls data from meteostat 
+which is the most granular data I can find. It pulls all sorts of data on an hourly basis. 
+you can rerun the script if you want with   python "API's\WeatherAPI.py"   in the terminal
+
+The Weather_data.csv is the result of running the WeatherAPI function.  
+
+It contains data from the last year from the location (closest to our sensors)
+lat = 29.7604
+lon = -95.3698

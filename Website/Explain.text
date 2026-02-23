@@ -1,0 +1,7 @@
+This is the website folder. If done properly it should display a website on your self hosted live server. 
+
+Assuming no bugs, you shuld be able to run   python "Website\flood_dashboard.py"  wait a few seconds and then click on the
+link in the terminal to go to the website. 
+
+As far as modeling is concerened this is useless. Its helpful for visualizing 
+what we are looking at with the sensor data though. 

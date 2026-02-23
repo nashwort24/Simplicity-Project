@@ -1,8 +1,8 @@
 import pandas as pd
 
 # Read both CSV files
-df_avalon = pd.read_csv(r'c:\Users\USER\Downloads\Simplicity Project\sesnsor_data\84_avalon.csv')
-df_houston = pd.read_csv(r'c:\Users\USER\Downloads\Simplicity Project\east_houston_weather.csv')
+df_avalon = pd.read_csv(r'c:\Users\USER\Downloads\Simplicity Project\Sensor_Data\84_avalon.csv')
+df_houston = pd.read_csv(r'c:\Users\USER\Downloads\Simplicity Project\Weather Data\east_houston_weather.csv')
 
 # Convert Time columns to datetime
 df_avalon['Time'] = pd.to_datetime(df_avalon['Time'])

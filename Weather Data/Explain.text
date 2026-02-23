@@ -1,0 +1,14 @@
+This is probably the most complicated folder. 
+
+It starts with East_houston.py which is simply a function that pulls data from meteostat (data source I found)
+This outputs data into East_houston_weather.csv
+
+We then use merge_test.py to merge the data from East_houston_weather.csv with the sensor data from avalon 84. 
+
+essentially if meteostat has the same hour as the sensor data it combines the rows, and duplicates it. 
+Its a left-join, which means the final output has the same number of rows as the sensor data input. 
+
+This is a proof of concept for combining data we find with sensor data. 
+
+TLDR: folder is a walkthrough in combining outside weather data with sensor data
+

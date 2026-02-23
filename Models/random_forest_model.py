@@ -7,7 +7,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Load data
-df = pd.read_csv(r'c:\Users\USER\Downloads\Simplicity Project\test_merged_avalon_houston.csv')
+df = pd.read_csv(r'c:\Users\USER\Downloads\Simplicity Project\Weather Data\merge_weather_avalon_84.csv')
 
 # Create binary target: 1 if "High High", 0 otherwise
 df['is_high_high'] = (df['State'] == 'High High').astype(int)

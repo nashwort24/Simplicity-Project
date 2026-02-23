@@ -1,0 +1,22 @@
+this is the general overview of how the folder/project is layed out. 
+
+Theres a lot of ambiguity with this project so it's kinda messy, and theres not a whole lot I can do 
+to fix that rn. However, I can try to walk yall through my thought process.
+
+
+
+API's : All about collecting live data (thats what api is for). I don't think they are going to be 
+relevant to our project at all becuase the sensor data is all historical. 
+
+Sensor Data: Contains all of the sensor data that was given to us. 
+
+Weather data: Contains a walkthrough of merging weather data with sensor data so we can run models
+
+Models: contains an example of a rf model that I used on the merged data example 
+
+Website: contains an overview of what we are looking at with the sensor data. 
+
+
+
+
+lastly I added an exploratory analysis for the sensor data just to try and understand what we are looking at. 
