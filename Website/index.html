@@ -580,19 +580,8 @@
             initMap();
             
             // Populate date selector with available dates from backend
-            const scripts = document.querySelectorAll('script');
-            let datesData = [];
-            scripts.forEach(script => {
-                if (script.textContent.includes('window.AVAILABLE_DATES')) {
-                    try {
-                        eval(script.textContent);
-                        datesData = window.AVAILABLE_DATES || [];
-                    } catch (e) {}
-                }
-            });
-            
-            if (datesData.length > 0) {
-                populateDateSelector(datesData);
+            if (window.AVAILABLE_DATES && window.AVAILABLE_DATES.length > 0) {
+                populateDateSelector(window.AVAILABLE_DATES);
             }
             
             updateDashboard();

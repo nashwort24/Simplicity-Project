@@ -6,7 +6,7 @@ from datetime import datetime
 import pickle
 import os
 
-app = Flask(__name__, template_folder='website')
+app = Flask(__name__, template_folder='Website', static_folder='Website')
 
 # Load merged data and train model
 # Use relative path so it works on deployment
