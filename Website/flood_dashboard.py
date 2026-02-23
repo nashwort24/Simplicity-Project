@@ -6,11 +6,11 @@ from datetime import datetime
 import pickle
 import os
 
-app = Flask(__name__, template_folder='Website', static_folder='Website')
+app = Flask(__name__, template_folder='.', static_folder='.')
 
 # Load merged data and train model
-# Use relative path so it works on deployment
-csv_path = os.path.join(os.path.dirname(__file__), '..', 'Weather Data', 'merge_weather_avalon_84.csv')
+base_dir = os.path.dirname(os.path.abspath(__file__))
+csv_path = os.path.join(os.path.dirname(base_dir), 'Weather Data', 'merge_weather_avalon_84.csv')
 df = pd.read_csv(csv_path)
 df['is_high_high'] = (df['State'] == 'High High').astype(int)
 df['Time'] = pd.to_datetime(df['Time'])
